@@ -1,0 +1,41 @@
+# docker-compose.yml - Runs Hermes API and Redis
+services:
+  redis:
+    image: redis:latest
+    container_name: hermes-redis
+    ports:
+      - "6379:6379"
+    restart: always
+    networks:
+      - hermes_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 5
+      start_period: 5s
+      timeout: 3s
+
+  hermes:
+    build: .
+    image: hermes-app
+    container_name: hermes-app
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - hermes_network
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - REDIS_HOST=redis
+      - ADMIN_API_KEY=supersecurekey
+      - TEST_ENV=false
+      - LOCAL_ENV=false
+      - GIN_MODE=release
+
+networks:
+  hermes_network:
+    name: hermes_network
+    driver: bridge
+    external: false  # Ensure Compose creates it

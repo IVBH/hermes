@@ -1,0 +1,121 @@
+# config/swagger.yaml - OpenAPI (Swagger) Specification for Hermes API
+openapi: 3.0.0
+info:
+  title: Hermes API
+  description: API for publishing and subscribing to messages using Redis Streams.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+paths:
+  /register:
+    post:
+      summary: Register an app and get an API key
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                app_name:
+                  type: string
+                  example: "my-app"
+      responses:
+        200:
+          description: API key generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  api_key:
+                    type: string
+                    example: "abcd1234efgh5678"
+  /publish:
+    post:
+      summary: Publish a message to a channel
+      tags:
+        - Messaging
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                channel:
+                  type: string
+                  example: "hermes_channel"
+                message:
+                  type: string
+                  example: "Hello from Hermes!"
+      responses:
+        200:
+          description: Message published
+  /subscribe:
+    post:
+      summary: Subscribe to messages from a channel
+      tags:
+        - Messaging
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                channel:
+                  type: string
+                  example: "hermes_channel"
+      responses:
+        200:
+          description: Messages retrieved
+  /admin/whitelist:
+    post:
+      summary: Manage whitelisted apps
+      tags:
+        - Admin
+      security:
+        - AdminKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                app_name:
+                  type: string
+                  example: "new-app"
+                action:
+                  type: string
+                  enum: ["add", "remove"]
+                  example: "add"
+      responses:
+        200:
+          description: Whitelist updated
+  /health:
+    get:
+      summary: Check API health status
+      tags:
+        - Health
+      responses:
+        200:
+          description: API is running
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+    AdminKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization

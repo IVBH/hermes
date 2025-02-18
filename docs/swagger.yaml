@@ -1,0 +1,275 @@
+definitions:
+  handlers.ErrorResponse:
+    properties:
+      error:
+        description: Error description
+        type: string
+    type: object
+  handlers.PublishRequest:
+    properties:
+      channel:
+        description: Channel to publish the message
+        type: string
+      message:
+        description: The message content
+        type: string
+    required:
+    - channel
+    - message
+    type: object
+  handlers.PublishResponse:
+    properties:
+      message:
+        description: Confirmation message
+        type: string
+    type: object
+  handlers.SubscribeRequest:
+    properties:
+      channel:
+        description: Channel to subscribe to
+        type: string
+    required:
+    - channel
+    type: object
+  handlers.SubscribeResponse:
+    properties:
+      messages:
+        description: List of received messages
+        items:
+          type: string
+        type: array
+    type: object
+info:
+  contact: {}
+paths:
+  /admin/whitelist:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint allows an admin to add or remove applications from
+        the whitelist
+      parameters:
+      - description: Admin Key for authentication
+        in: header
+        name: admin_key
+        required: true
+        type: string
+      - description: Whitelist Update Request
+        in: body
+        name: request
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Whitelist updated successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Unauthorized request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Manages the whitelist of approved applications
+      tags:
+      - Admin
+  /health:
+    get:
+      description: This endpoint checks if Hermes and Redis are running properly
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: System is healthy
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Redis is unreachable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Checks the health status of Hermes API
+      tags:
+      - System
+  /protected:
+    get:
+      consumes:
+      - application/json
+      description: This middleware validates the API key for incoming requests
+      parameters:
+      - description: API Key for authentication
+        in: header
+        name: api_key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Valid API Key
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Unauthorized request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Middleware for API Key Validation
+      tags:
+      - Authentication
+  /publish:
+    post:
+      consumes:
+      - application/json
+      description: Publish a message to a specific Redis channel
+      parameters:
+      - description: Publish request payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.PublishRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.PublishResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Publish a message
+      tags:
+      - Messaging
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint registers an application for pub/sub
+      parameters:
+      - description: App Registration Data
+        in: body
+        name: app
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Registers a new app
+      tags:
+      - auth
+  /renew:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint renews an expired API key for an application
+      parameters:
+      - description: API Key Renewal Request
+        in: body
+        name: request
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: New API key issued successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid API key
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Unauthorized request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Renews an API key
+      tags:
+      - Authentication
+  /subscribe:
+    post:
+      consumes:
+      - application/json
+      description: Subscribe to a Redis channel and receive messages
+      parameters:
+      - description: Subscribe request payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.SubscribeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SubscribeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Subscribe to a channel
+      tags:
+      - Messaging
+swagger: "2.0"
